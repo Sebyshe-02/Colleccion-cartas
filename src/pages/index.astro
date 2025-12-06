@@ -1,0 +1,30 @@
+---
+import Gallery from "../components/Gallery.astro";
+import UploadForm from "../components/UploadForm.astro";
+
+// Leer todas las imágenes guardadas en /public/cartas
+import fs from "fs";
+const images = fs.readdirSync("./public/cartas");
+---
+
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Colección de Cartas</title>
+  <body>
+    <h1>Colección de cartas</h1>
+    <UploadForm />
+
+    <Gallery images={images} />
+  </body>
+</html>
+
+<style>
+  h1 {
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+
+</style>

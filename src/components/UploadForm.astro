@@ -1,0 +1,90 @@
+---
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+    cloud_name: import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: import.meta.env.CLOUDINARY_API_KEY,
+    api_secret: import.meta.env.CLOUDINARY_API_SECRET,
+});
+
+const uploadStream = async (buffer: Uint8Array, options: any) => {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(options, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+        })
+        .end(buffer);
+    })
+}
+
+let uploadFile: any | undefined;
+
+if (Astro.request.method === 'POST') {
+    const data = await Astro.request.formData();
+    const file = data.get('file') as File;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+
+    const response = await uploadStream(buffer, {
+        folder: 'cartas-astro',
+    });
+
+   uploadFile = response;
+}
+---
+
+<div id="container-upload">
+    <form method="post" enctype="multipart/form-data" >
+        <input id="upload-btn" type="file" name="file" required/>
+        <label for="file">Subir carta</label>
+        <button id="submit-btn" type="submit">Subir carta</button>
+    </form>
+</div>
+
+
+<style>
+    #container-upload {
+        margin-bottom: 1rem;
+    }
+
+    input[type="file"] {
+        margin-right: 0.5rem;
+        
+    }
+
+    /* Estilo para el botón interno del input file (navegadores modernos) */
+    input[type="file"]::file-selector-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        margin-right: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    /* WebKit prefijo para compatibilidad con navegadores basados en WebKit */
+    input[type="file"]::-webkit-file-upload-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        margin-right: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button{
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+</style>
