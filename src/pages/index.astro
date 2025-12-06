@@ -4,7 +4,6 @@ import UploadForm from "../components/UploadForm.astro";
 
 // Leer todas las imágenes guardadas en /public/cartas
 import fs from "fs";
-const images = fs.readdirSync("./public/cartas");
 ---
 
 <html lang="es">
@@ -16,7 +15,7 @@ const images = fs.readdirSync("./public/cartas");
     <h1>Colección de cartas</h1>
     <UploadForm />
 
-    <Gallery images={images} />
+    <Gallery />
   </body>
 </html>
 
