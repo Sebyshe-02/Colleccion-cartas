@@ -1,6 +1,7 @@
 ---
 import { v2 as cloudinary } from "cloudinary";
 import { getCollection } from "astro:content";
+export const prerender = false
 
 cloudinary.config({
   cloud_name: import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME,
