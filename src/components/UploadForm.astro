@@ -1,46 +1,10 @@
----
-import { v2 as cloudinary } from "cloudinary";
-export const prerender = false
-
-cloudinary.config({
-    cloud_name: import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: import.meta.env.CLOUDINARY_API_KEY,
-    api_secret: import.meta.env.CLOUDINARY_API_SECRET,
-});
-
-const uploadStream = async (buffer: Uint8Array, options: any) => {
-    return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(options, (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-        })
-        .end(buffer);
-    })
-}
-
-let uploadFile: any | undefined;
-
-if (Astro.request.method === 'POST') {
-    const data = await Astro.request.formData();
-    const file = data.get('file') as File;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-
-    const response = await uploadStream(buffer, {
-        folder: 'cartas-astro',
-    });
-
-   uploadFile = response;
-}
----
-
 <div id="container-upload">
-    <form method="post" enctype="multipart/form-data" >
-        <input id="upload-btn" type="file" name="file" required/>
-        <label for="file">Subir carta</label>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input id="file" type="file" name="file" accept="image/*" required/>
+        <label for="file">Elegir archivo</label>
         <button id="submit-btn" type="submit">Subir carta</button>
     </form>
+    <div id="upload-status" aria-live="polite"></div>
 </div>
 
 
@@ -89,3 +53,35 @@ if (Astro.request.method === 'POST') {
         background-color: #45a049;
     }
 </style>
+
+<script type="module">
+    const form = document.getElementById('uploadForm');
+    const input = document.getElementById('file');
+    const status = document.getElementById('upload-status');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+        const fd = new FormData();
+        fd.append('file', file);
+        status.textContent = 'Subiendo...';
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (!res.ok) {
+                const text = await res.text();
+                status.textContent = 'Error al subir';
+                console.error('Upload failed', text);
+                return;
+            }
+            const asset = await res.json();
+            // Notificar a la galería para que muestre la imagen en tiempo real
+            window.dispatchEvent(new CustomEvent('asset:added', { detail: asset }));
+            status.textContent = 'Subida correcta';
+            input.value = '';
+        } catch (err) {
+            console.error(err);
+            status.textContent = 'Error en la subida';
+        }
+    });
+</script>

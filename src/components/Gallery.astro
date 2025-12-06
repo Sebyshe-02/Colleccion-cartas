@@ -1,28 +1,21 @@
 ---
-import { v2 as cloudinary } from "cloudinary";
 import { getCollection } from "astro:content";
-export const prerender = false
-
-cloudinary.config({
-  cloud_name: import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: import.meta.env.CLOUDINARY_API_KEY,
-  api_secret: import.meta.env.CLOUDINARY_API_SECRET
-});
-
 const assets = await getCollection("assets");
-console.log('assets', assets);
 ---
 
 <div class="gallery">
-    {assets.map(asset =>{
-        return (
-            <img src={asset.data.secure_url}/>
-        )
-    })}
+    {assets && assets.length ? (
+        assets.map(asset => (
+            <img src={asset.data.secure_url} alt={asset.data.public_id} loading="lazy" />
+        ))
+    ) : (
+        <p class="empty">No hay cartas para mostrar.</p>
+    )}
+    
 </div>
 
 <style>
-    .gallery {
+    :global(.gallery) {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 16px;
@@ -30,7 +23,7 @@ console.log('assets', assets);
         padding: 20px;
     }
 
-    .gallery img {
+    :global(.gallery img), :global(.gallery-img) {
         width: 100%;
         height: auto;
         object-fit: cover;
@@ -38,8 +31,30 @@ console.log('assets', assets);
         transition: transform 0.3s ease; 
     }
 
-    .gallery img:hover {
+    :global(.gallery img:hover), :global(.gallery-img:hover) {
         transform: scale(1.05); 
     }
 
 </style>
+
+<script type="module">
+    if (typeof window !== 'undefined') {
+        const gallery = document.querySelector('.gallery');
+        const empty = document.querySelector('.empty');
+        window.addEventListener('asset:added', (ev) => {
+            const res = ev.detail;
+            const src = res.secure_url || res.url || '';
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = res.public_id || 'Carta';
+            img.loading = 'lazy';
+            img.classList.add('gallery-img');
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            if (gallery) gallery.prepend(img);
+            if (empty) empty.remove();
+        });
+    }
+</script>
